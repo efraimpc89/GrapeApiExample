@@ -16,6 +16,17 @@ module V1
             present book
         end
 
+        desc 'query for specific book in google book api'
+        params do
+            requires :q,        type: String
+        end
+        get  '/googleapi/search' do
+            url = "https://www.googleapis.com/books/v1/volumes?q=#{params[:q]}&maxResults=15"
+            response = HTTParty.get(url)
+            result = response.parsed_response
+            present result
+        end
+
         #POST
 
         desc 'Creates a new book'

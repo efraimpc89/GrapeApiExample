@@ -1,6 +1,6 @@
 module V1
     class Books < Grape::API
-        
+        format:json
 
         #GET
 
@@ -8,6 +8,12 @@ module V1
         get '/books' do
             books = Book.all 
             present books
+        end
+
+        desc  'Return all publishers'
+        get '/publishers' do
+            publishers = Publisher.all 
+            present publishers
         end
 
         desc 'Return specific book'
@@ -30,37 +36,66 @@ module V1
         #POST
 
         desc 'Creates a new book'
-        params do
-            requires :title,        type: String
-            requires :description,  type: String
-            requires :page_count,   type: Integer
-        end
         post '/books' do
-            book = Book.create!({
-                title:  params[:title],
-                description: params[:description],
-                page_count: params[:page_count]
-            })
+        #Creates a new book
+        book = Book.new(params[:book])
+        
+        #If publisher does not exist creates it
+        publisher = Publisher.find_or_create_by(params[:publisher])
+        book.publisher_id = publisher.id
+
+        #Get categories,create them if they dont exist and assign them to book
+        categories = params[:categories]
+        categories.each do |c| 
+           book.category << Category.find_or_create_by(name: c)
         end
+
+        #save and present book
+        book.save
+        present book
+        end
+
+        desc 'Creates a publisher'
+        params do
+            requires :name,        type: String
+        end
+        post '/publishers' do
+            publisher = Publisher.find_or_initialize_by({
+                name: params[:name]
+            })
+            publisher.save
+        end 
 
         #PUT
 
         desc 'Updates an specific book'
         params do
             requires :id,  type: Integer
-            optional :title,        type: String
-            optional :description,  type: String
-            optional :page_count,   type: Integer
         end
         put '/books/:id' do
+            #look for the existing book
             book = Book.find(params[:id])
-            raise NotFoundError if book.nil?
 
-            Book.find(params[:id]).update_attributes!({
-                title:  params[:title],
-                description: params[:description],
-                page_count: params[:page_count]
-            })
+            #Deletes any categories it already has
+             book.category.delete_all
+
+            # #Updates publisher
+             publisher = Publisher.find_or_create_by(params[:publisher])
+             Rails.logger.debug(publisher)
+             book.publisher_id = publisher.id
+
+            # #Updates main fields
+             book.update_attributes!(params[:book])
+
+            # #Updates categories
+             categories = params[:categories]
+             categories.each do |c| 
+             book.category << Category.find_or_create_by(name: c)
+             end
+
+             book.save!
+             present book
+
         end
 
         #DELETE
@@ -70,7 +105,6 @@ module V1
         end
         delete '/books/:id' do
             book = Book.find(params[:id])
-            raise NotFoundError if book.nil?
 
             Book.find(params[:id]).destroy
         end

@@ -36,7 +36,6 @@ module GrapeAPI
     # Auto-load API and its subdirectories
     config.paths.add 'app/api', glob: '**/*.rb'
     config.autoload_paths += Dir["#{Rails.root}/app/api/*"]
-
     # Configure the default encoding used in templates
     config.encoding = 'utf-8'
 

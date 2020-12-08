@@ -9,13 +9,11 @@ describe "TEST API" do
         expect(response.status).to eq(200)
     end
 
-    # it 'GET - /googleapi/search' do
-    #     get('/googleapi/search')
-
-    #     puts response.status
-
-    #     #expect(response.status).to eq(200)
-    # end
+    it 'GET - /googleapi/search' do
+        get('/api/v1/googleapi/search',params:{q: Faker::Book.title})
+        
+        expect(response.status).to eq(200)
+    end
 
     it 'get book request - returns books ' do
           
